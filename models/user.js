@@ -21,8 +21,6 @@ userSchema.pre('save', function(next){
 });
 
 userSchema.methods.comparePassword = function(loginPassword, next){
-    bycrypt.compare(loginPassword, this.password)
-        .then(isMatch=>next(null, isMatch))
-        .catch(err=>next(err));
+    return bycrypt.compare(loginPassword, this.password);
 };
 module.exports = mongoose.model('User', userSchema);

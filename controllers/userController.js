@@ -30,25 +30,28 @@ exports.login = (req, res)=>{
 
 exports.authenticate = (req, res, next)=>{
     let {email, password} = req.body;
-    model.findOne({email: email}).select('firstName lastName email password')
+    model.findOne({email})
         .then(user=>{
             console.log(user);
             if(user) {
                 user.comparePassword(password)
                     .then(isMatch=>{
-                        if(err) return next(err);
                         if(isMatch) {
                             //req.session.userId = user._id;
-                            return res.redirect('/users/profile');
+                            return res.redirect('./profile');
                         } else {
                             console.log('Invalid password');
-                            redirect('/users/login');
+                            res.redirect('./login');
                         }
                 });
             } else {
                 console.log('Invalid email');
-                redirect('/users/login');
+                res.redirect('./login');
             }
         })
         .catch(err=>next(err));
+}
+
+exports.profile = (req, res)=>{
+    res.render('./user/profile');
 }
