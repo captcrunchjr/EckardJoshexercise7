@@ -1,5 +1,6 @@
 const user = require('../models/user');
 const model = require('../models/user');
+const flash = require('connect-flash');
 
 exports.index = (req, res, next)=>{
     model.find()
@@ -14,7 +15,7 @@ exports.signup = (req, res)=>{
 exports.create = (req, res, next)=>{
     let user = new model(req.body);
     user.save()
-    .then(user=> res.redirect('./users/login'))
+    .then(user=> res.redirect('./login'))
     .catch(err=>{
         if(err.name === 'ValidationError' ) {
             err.status = 400;
@@ -29,6 +30,7 @@ exports.login = (req, res)=>{
 };
 
 exports.authenticate = (req, res, next)=>{
+    console.log(req);
     let {email, password} = req.body;
     model.findOne({email})
         .then(user=>{
@@ -37,15 +39,16 @@ exports.authenticate = (req, res, next)=>{
                 user.comparePassword(password)
                     .then(isMatch=>{
                         if(isMatch) {
-                            //req.session.userId = user._id;
+                            req.session.user = user._id;
+                            req.flash('success', 'You are now logged in');
                             return res.redirect('./profile');
                         } else {
-                            console.log('Invalid password');
+                            req.flash('error', 'Invalid password');
                             res.redirect('./login');
                         }
                 });
             } else {
-                console.log('Invalid email');
+                req.flash('error', 'Invalid email');
                 res.redirect('./login');
             }
         })
@@ -53,5 +56,19 @@ exports.authenticate = (req, res, next)=>{
 }
 
 exports.profile = (req, res)=>{
-    res.render('./user/profile');
+    if(req.session.user === undefined) return res.redirect('./login');
+    let id = req.session.user;
+    model.findById(id)
+        .then(user=>res.render('./user/profile', {user}))
+        .catch(err=>next(err));
+}
+
+exports.logout = (req, res, next)=>{
+    req.session.destroy(err=>{
+        if(err) 
+            return next(err);
+        else 
+            return res.redirect('/');
+    });
+    res.redirect('/');
 }
